@@ -1,0 +1,9 @@
+# created by virtualenv automatically
+Lib
+Scripts
+bot.log
+dima.db
+probe.py
+pyvenv.cfg
+config.py
+__pycache__
