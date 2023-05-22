@@ -1,4 +1,6 @@
-from config import TOKEN_GRAM, HELP_COMMAND, CHAT_ID
+#!/bin/python3
+
+from config import TOKEN_GRAM, HELP_COMMAND, CHANEL_ID
 import uuid, asyncio, logging
 import logging.config
 from log_settings import log_config
@@ -16,6 +18,7 @@ from sqlite import *
 
 logging.config.dictConfig(log_config)
 bot_log = logging.getLogger('bot')
+
 
 storage = MemoryStorage()
 bot = Bot(TOKEN_GRAM)
@@ -158,6 +161,18 @@ async def setnum_command(message: types.Message):
     await NumStateGroups.num.set()
     bot_log.debug(f'Применена команда /setnum: {message}')
 
+@dp.message_handler(commands=['comment'])
+async def comment_command(message: types.Message):
+    comm = await check_comment()
+    comm = 1 if comm == 0 else 0
+    await set_comment(comm)
+    if comm == 1:
+        await message.answer(text='Комментарии включены')
+        bot_log.debug(f'Применена команда /comment на включение комментариев: {message}')
+    else:
+        await message.answer(text='Комментарии отключены')
+        bot_log.debug(f'Применена команда /comment на отключение комментариев: {message}')
+
 
 @dp.message_handler(lambda message: not message.text.isdigit(), content_types=['text'], state=AdminStateGroups.user_id)
 async def check_id(message: types.Message) -> None:
@@ -212,7 +227,7 @@ async def resend_video(message: types.Message):
                          video=message.video.file_id,
                          caption=caption,
                          supports_streaming=True,
-                         reply_markup=get_ikb(like, dislike))
+                         reply_markup=await get_ikb(like, dislike))
     num += 1
     bot_log.info(f'Успешно переслано видео от {message.from_user.username}')
     await set_num(num)
@@ -225,12 +240,11 @@ async def like_handle(callback: types.CallbackQuery, callback_data=dict) -> None
     if await check_if_voted(callback.message.message_id, callback.from_user.id, 1):
         await callback.answer(text='ALREADY VOTED', cache_time=1)
     else:
-        await callback.answer(text='LIKE', cache_time=1)
-
         await set_vote(callback.message.message_id, callback.from_user.id, 1)
         like = await like_count(callback.message.message_id)
         dislike = await dislike_count(callback.message.message_id)
-        await callback.message.edit_reply_markup(reply_markup=get_ikb(like, dislike))
+        await callback.message.edit_reply_markup(reply_markup=await get_ikb(like, dislike))
+        await callback.answer(text='LIKE', cache_time=1)
 
 
 @dp.callback_query_handler(cb.filter(action='dislike'))
@@ -241,11 +255,11 @@ async def dislike_handle(callback: types.CallbackQuery, callback_data=dict) -> N
     if await check_if_voted(callback.message.message_id, callback.from_user.id, 0):
         await callback.answer(text='ALREADY VOTED', cache_time=1)
     else:
-        await callback.answer(text='DISLIKE', cache_time=1)
         await set_vote(callback.message.message_id, callback.from_user.id, 0)
         like = await like_count(callback.message.message_id)
         dislike = await dislike_count(callback.message.message_id)
-        await callback.message.edit_reply_markup(reply_markup=get_ikb(like, dislike))
+        await callback.message.edit_reply_markup(reply_markup=await get_ikb(like, dislike))
+        await callback.answer(text='DISLIKE', cache_time=1)
 
 
 if __name__ == '__main__':

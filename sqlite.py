@@ -1,3 +1,5 @@
+#!/bin/python3
+
 import sqlite3 as sq
 import datetime
 from config import SUPER_ADMIN
@@ -27,6 +29,12 @@ async def start_db():
     db.commit()
 
     cur.execute('CREATE TABLE IF NOT EXISTS votes(id INTEGER PRIMARY KEY AUTOINCREMENT, post_id INTEGER, user_id INTEGER, vote INTEGER)')
+    db.commit()
+
+    cur.execute('CREATE TABLE IF NOT EXISTS comment(comm INTEGER PRIMARY KEY)')
+    comm = cur.execute("SELECT 1 FROM comment").fetchone()
+    if not comm:
+        cur.execute("INSERT INTO comment VALUES(?)", ('1'))
     db.commit()
 
 async def check_rights():
@@ -84,9 +92,18 @@ async def get_num():
     return num[0]
 
 async def set_num(num: int):
-    num = cur.execute("UPDATE number SET num = '{}'".format(num))
+    cur.execute("UPDATE number SET num = '{}'".format(num))
     db.commit()
 
 async def check_top():
     tops = cur.execute("select first_name, count(username) from messages where is_post = 1 group by first_name order by count(username) desc limit 3").fetchall()
     return tops
+
+async def check_comment():
+    comm = cur.execute("SELECT comm FROM comment").fetchone()
+    db.commit()
+    return comm[0]
+
+async def set_comment(comm):
+    cur.execute("UPDATE comment SET comm = '{}'".format(comm))
+    db.commit()

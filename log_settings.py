@@ -1,3 +1,5 @@
+#!/bin/python3
+
 from config import LOG_LEVEL
 
 log_config = {
