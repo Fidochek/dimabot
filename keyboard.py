@@ -18,7 +18,7 @@ async def get_ikb(like, dislike) -> InlineKeyboardMarkup:
         ikb = InlineKeyboardMarkup(row_width=2, inline_keyboard=[
             [InlineKeyboardButton(text=f'👍 {like}', callback_data=cb.new('like')),
              InlineKeyboardButton(text=f'👎 {dislike}', callback_data=cb.new('dislike'))],
-            [InlineKeyboardButton(text=f'Оставить комментарий', url='https://t.me/c/{}/'.format(GROUP_ID))]
+            [InlineKeyboardButton(text=f'Обсудить видео в чате', url='https://t.me/c/{}/'.format(GROUP_ID))]
         ])
     else:
         ikb = InlineKeyboardMarkup(row_width=2, inline_keyboard=[
@@ -27,6 +27,7 @@ async def get_ikb(like, dislike) -> InlineKeyboardMarkup:
         ])
 
     return ikb
+
 
 def get_cancel() -> ReplyKeyboardMarkup:
     return ReplyKeyboardMarkup(resize_keyboard=True, one_time_keyboard=True).add(KeyboardButton('/cancel'))

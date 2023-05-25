@@ -2,7 +2,7 @@
 
 import sqlite3 as sq
 import datetime
-from config import SUPER_ADMIN
+from config import SUPER_ADMIN, LIMIT_TOP
 
 async def start_db():
     global db, cur
@@ -96,7 +96,7 @@ async def set_num(num: int):
     db.commit()
 
 async def check_top():
-    tops = cur.execute("select first_name, count(username) from messages where is_post = 1 group by first_name order by count(username) desc limit 3").fetchall()
+    tops = cur.execute("select first_name, count(username) from messages where is_post = 1 group by first_name order by count(username) desc limit {}".format(LIMIT_TOP)).fetchall()
     return tops
 
 async def check_comment():
@@ -107,3 +107,8 @@ async def check_comment():
 async def set_comment(comm):
     cur.execute("UPDATE comment SET comm = '{}'".format(comm))
     db.commit()
+
+async def get_top_per_month(year, month, last_day):
+    top_month = cur.execute(
+        "select first_name, count(username) from messages where is_post = 1 and (date_time between '{}-{}-01 00:00:00' and '{}-{}-{} 23:59:59') group by first_name order by count(username) desc limit {}".format(year, month, year, month, last_day, LIMIT_TOP)).fetchall()
+    return top_month

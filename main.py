@@ -14,6 +14,8 @@ from aiogram.dispatcher.handler import current_handler, CancelHandler
 from aiogram.contrib.fsm_storage.memory import MemoryStorage
 from aiogram.dispatcher.filters.state import State, StatesGroup
 from aiogram.dispatcher import FSMContext, DEFAULT_RATE_LIMIT
+from apscheduler.schedulers.asyncio import AsyncIOScheduler
+from utils import top_month
 from sqlite import *
 
 logging.config.dictConfig(log_config)
@@ -23,12 +25,14 @@ bot_log = logging.getLogger('bot')
 storage = MemoryStorage()
 bot = Bot(TOKEN_GRAM)
 dp = Dispatcher(bot=bot, storage=storage)
+sheduler = AsyncIOScheduler()
 
 
 class AdminsMiddleware(BaseMiddleware):
 
     async def on_pre_process_update(self, update: types.Update, data: dict):
         users = await check_rights()
+        print(f'on_pre_process_update {update}')
 
         if 'channel_post' in update:
             bot_log.debug(f'on_pre_process_update: channel_post: {update}')
@@ -41,7 +45,7 @@ class AdminsMiddleware(BaseMiddleware):
             bot_log.debug(f'on_pre_process_update: message: {update}')
             if update.message.from_user.id not in users:
                 # print(f'ACCESS DENIED FOR {update.message.from_user.id}')
-                if update.message.chat.type != 'group':
+                if (update.message.chat.type != 'group') or (update.message.sender_chat.type != 'channel'):
                     await update.message.answer(
                         text=f'Доступа нет. Отправь свой ID {update.message.from_user.id} админу.')
                 raise CancelHandler()
@@ -78,6 +82,9 @@ class AdminsMiddleware(BaseMiddleware):
         except Exception:
             bot_log.exception(f'on_post_process_message: непредвиденная ошибка: {message}')
 
+    async def on_post_process_update(self, update: types.Update, data: dict, handler):
+        print(f'post-proc-update {update}')
+
     # async def on_post_process_callback_query(self, callback_query: types.CallbackQuery, data: dict, handler):
     #
     #     # print(f'POST CALLBACK {callback_query}')
@@ -101,9 +108,12 @@ class NumStateGroups(StatesGroup):
 
 async def on_startup(_):
     await start_db()
+    schedul_job()
     bot_log.info('Бот успешно запущен')
     print('Бот успешно запущен')
 
+def schedul_job():
+    sheduler.add_job(top_month, 'cron', year='*', month='*', day=24, hour=8, minute=1, second=0)
 
 @dp.message_handler(commands=['cancel'], state='*')
 async def cmd_cancel(message: types.Message, state: FSMContext) -> None:
@@ -265,4 +275,5 @@ async def dislike_handle(callback: types.CallbackQuery, callback_data=dict) -> N
 if __name__ == '__main__':
     # dp.middleware.setup(ThrottlingMiddleware())
     dp.middleware.setup(AdminsMiddleware())
+    sheduler.start()
     executor.start_polling(dp, on_startup=on_startup, skip_updates=True)
