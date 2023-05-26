@@ -1,3 +1,5 @@
+#!/bin/python3
+
 import datetime
 from sqlite import get_top_per_month
 from pathlib import Path

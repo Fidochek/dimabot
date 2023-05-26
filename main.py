@@ -15,6 +15,7 @@ from aiogram.contrib.fsm_storage.memory import MemoryStorage
 from aiogram.dispatcher.filters.state import State, StatesGroup
 from aiogram.dispatcher import FSMContext, DEFAULT_RATE_LIMIT
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
+from apscheduler.triggers.cron import CronTrigger
 from utils import top_month
 from sqlite import *
 
@@ -113,7 +114,7 @@ async def on_startup(_):
     print('Бот успешно запущен')
 
 def schedul_job():
-    sheduler.add_job(top_month, 'cron', year='*', month='*', day=24, hour=8, minute=1, second=0)
+    sheduler.add_job(top_month, CronTrigger(year='*', month='*', day=26, hour=16, minute=41, second=0))
 
 @dp.message_handler(commands=['cancel'], state='*')
 async def cmd_cancel(message: types.Message, state: FSMContext) -> None:
